@@ -160,7 +160,7 @@ int main(int argc, char* argv[])
 	 * it, return with a “file not found” error. If you do find it but it’s an executable file and not printable
 	 * return with an error message.
 	 * 2. Using the starting sector number and sector count in the directory, load the file into a new buffer of
-	 * size 12288 (our max file size) via fseek and fgetc as shown in the starter file.
+	 * size 12,288 (our max file size) via fseek and fgetc as shown in the starter file.
 	 * 3. Starting from index zero print each individual character until you run into a zero (the end-of-file
 	 * delimiter). Return.
 	 * This is easy to test given the four files on the disk image, only one of which (msg) should be viewable. Also
@@ -222,6 +222,175 @@ int main(int argc, char* argv[])
 		printf("%s\n", buffer);
 	}
 
+	/**
+	 * @option M: Create and store a text file
+	 * Prompt the user for a string of text and create a 1-sector (512 byte) file storing it. Writing a file means
+	 * finding a free directory entry and setting it up, finding free space on the disk for the file, and setting the
+	 * appropriate map byte(s). Your function should do the following:
+	 * 1. Search through the directory, doing two things simultaneously:
+	 * a. If you find the file name already exists, terminate with a “duplicate or invalid file name” error.
+	 * b. Otherwise find and note a free directory entry (one that begins with zero).
+	 * 2. Copy the name to that directory entry. If the name is shorter than 8 characters, fill in the remaining
+	 * bytes with zeros. If the name is longer than 8 characters keep only the first 8. Include the “t” file type
+	 * at the ninth location in the entry.
+	 * 3. To write the actual file to disk:
+	 * a. Find a free sector on the disk by searching through the map for a zero.
+	 * b. Set its map entry to 255.
+	 * 3460:4/526 Lab 3: A Simple File System Page 4
+	 * c. Add the starting sector number and length (1) to the file's directory entry.
+	 * d. Write the buffer holding the file to the correct sector.
+	 * 4. Write the map and directory sectors back to the disk.
+	 * If there are no free directory entries or not enough free sectors left, your function should terminate with
+	 * an “insufficient disk space” error. Testing should be obvious (create a file and try printing it out) but
+	 * remember the error cases.
+	 */
+    else if (argc == 3 && strcmp(argv[1], "M") == 0) {
+
+		char* newFileName = argv[2];
+
+		int freeDirEntryIndex = -1;
+		int freeSector = -1;
+
+		// Search for a free directory entry
+		for (int i = 0; i < 512; i += 16) {
+			if (dir[i] == 0) {
+				freeDirEntryIndex = i;
+				break;
+			}
+
+			char filename[9];
+			strncpy(filename, (char*)&dir[i], 8);
+			filename[8] = '\0';
+
+			if (strcmp(filename, newFileName) == 0) {
+				printf("Error: Duplicate or invalid file name\n");
+				fclose(floppy);
+				return 1;
+			}
+		}
+
+		if (freeDirEntryIndex == -1) {
+			printf("Error: Insufficient directory space\n");
+			fclose(floppy);
+			return 1;
+		}
+
+		// Copy the file name to the directory entry
+		strncpy((char*)&dir[freeDirEntryIndex], newFileName, 8);
+
+		// Fill remaining bytes with zeros if the name is shorter than 8 characters
+		for (int i = strlen(newFileName); i < 8; ++i) {
+			dir[freeDirEntryIndex + i] = 0;
+		}
+
+		// Set file type as "t" (text file)
+		dir[freeDirEntryIndex + 8] = 't';
+
+		// Find a free sector on the disk in the map
+		for (int i = 0; i < 512; ++i) {
+			if (map[i] == 0) {
+				freeSector = i;
+				map[i] = -1; // Set map entry to 255 (indicating it's used)
+				break;
+			}
+		}
+
+		if (freeSector == -1) {
+			printf("Error: Insufficient disk space\n");
+			fclose(floppy);
+			return 1;
+		}
+
+		// Update directory entry with file location information
+		dir[freeDirEntryIndex + 9] = freeSector; // Start sector
+		dir[freeDirEntryIndex + 10] = 1; // Length
+
+		// Write the map and directory sectors back to the disk
+		fseek(floppy, 512 * 256, SEEK_SET);
+		for (int i = 0; i < 512; ++i) {
+			fputc(map[i], floppy);
+		}
+
+		fseek(floppy, 512 * 257, SEEK_SET);
+		for (int i = 0; i < 512; ++i) {
+			fputc(dir[i], floppy);
+		}
+
+		printf("File '%s' created successfully\n", newFileName);
+	}
+
+	/**
+	 * @option D: Delete file
+  	 * Deleting a file takes two steps. First, you need to change all the sectors reserved for the file in the disk
+  	 * map to free. Second, you need to set the first byte in the file's directory entry to zero.
+  	 * Your function should find the file in the directory and delete it if it exists. To accomplish this, do the
+  	 * following:
+  	 * 1. Search through the directory and try to find the file name. If you can’t find it terminate with a “file not
+  	 * found” error.
+  	 * 2. Set the first byte of the file name to zero.
+  	 * 3. Based on the starting sector and file length, step through the sectors numbers listed as belonging to
+  	 * the file. For each sector, set the corresponding map byte to zero. For example, if sector 7 belongs to
+  	 * the file, set the eighth map byte to zero (index 7, since the map starts at sector 0).
+  	 * 4. Write the character arrays holding the directory and map back to their appropriate sectors.
+  	 * Notice that this does not actually delete the file from the disk. It just makes the disk space used by the
+  	 * file available to be overwritten by something else. This is typically done in operating systems; it makes
+  	 * deletion fast and un-deletion possible. Test as above: create a file and then delete it, followed by a check
+  	 * of the hexdump.
+	 */
+	else if (argc == 3 && strcmp(argv[1], "D") == 0) {
+
+		char* deleteFileName = argv[2];
+
+		int fileEntryIndex = -1;
+		int startSector = -1;
+		int numSectors = -1;
+
+		// Search for the file in the directory
+		for (int i = 0; i < 512; i += 16) {
+			if (dir[i] == 0) {
+				break; // End of directory
+			}
+
+			char filename[9];
+			strncpy(filename, (char*)&dir[i], 8);
+			filename[8] = '\0';
+
+			if (strcmp(filename, deleteFileName) == 0) {
+				fileEntryIndex = i;
+				startSector = dir[i + 9];
+				numSectors = dir[i + 10];
+				break;
+			}
+		}
+
+		if (fileEntryIndex == -1) {
+			printf("Error: File not found\n");
+			fclose(floppy);
+			return 1;
+		}
+
+		// Mark the directory entry as deleted
+		dir[fileEntryIndex] = 0;
+
+		// Release sectors in the disk map
+		for (int i = startSector; i < startSector + numSectors; ++i) {
+			map[i] = 0;
+		}
+
+		// Write the updated map and directory sectors back to the disk
+		fseek(floppy, 512 * 256, SEEK_SET);
+		for (int i = 0; i < 512; ++i) {
+			fputc(map[i], floppy);
+		}
+
+		fseek(floppy, 512 * 257, SEEK_SET);
+		for (int i = 0; i < 512; ++i) {
+			fputc(dir[i], floppy);
+		}
+
+		printf("File '%s' deleted successfully\n", deleteFileName);
+	}
+
 	else {
 		// print disk map
 		printf("Disk usage map:\n");
@@ -281,16 +450,6 @@ int main(int argc, char* argv[])
 			printf(" %5d %6d bytes\n", dir[i+9], SECTOR_STORAGE_CAPACITY*dir[i + 10]);
 		}
 	}
-
-
-	/*
-		//write the map and directory back to the floppy image
-		fseek(floppy,512*256,SEEK_SET);
-		for (i=0; i<512; i++) fputc(map[i],floppy);
-
-		fseek(floppy,512*257,SEEK_SET);
-		for (i=0; i<512; i++) fputc(dir[i],floppy);
-	*/
 
 	fclose(floppy);
 }
