@@ -245,7 +245,6 @@ int main(int argc, char* argv[])
 	 * 3. To write the actual file to disk:
 	 * a. Find a free sector on the disk by searching through the map for a zero.
 	 * b. Set its map entry to 255.
-	 * 3460:4/526 Lab 3: A Simple File System Page 4
 	 * c. Add the starting sector number and length (1) to the file's directory entry.
 	 * d. Write the buffer holding the file to the correct sector.
 	 * 4. Write the map and directory sectors back to the disk.
