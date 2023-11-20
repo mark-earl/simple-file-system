@@ -28,12 +28,15 @@
  * Signed: Mark P. Earl Date: 12.8.2023
  */
 
+// Includes
 #include <stdio.h>
 #include <string.h>
 
+// Constants
 #define DISK_MAP_SECTOR_NUM 256
 #define DISK_DIR_SECTOR_NUM 257
 #define SECTOR_STORAGE_CAPACITY 512 // bytes
+#define TOTAL_BYTES 261632
 #define MAX_FILE_SIZE 12288
 
 int main(int argc, char* argv[])
@@ -114,6 +117,13 @@ int main(int argc, char* argv[])
 	 * system, a total of 511 sectors (or 511 x 512 = 261,632 bytes) is being tracked. At the end of the list of files,
 	 * print out the total space used by the files and the total free space remaining, both in terms of the number
 	 * of bytes.
+	 *
+	 * 00020220 6d 73 67 00 00 00 00 00 74 05 01 00 00 00 00 00 |msg.....t.......|
+	 * 00020220: Starting address
+	 * 6d 73 67 00 00 00 00 00: File name
+	 * 74: File type
+	 * 05: Starting Position
+	 * 01: Number of Sectors
 	 */
 	if (argc == 2 && strcmp(argv[1], "L") == 0) {
 
@@ -121,11 +131,13 @@ int main(int argc, char* argv[])
 		printf("Filename\tBytes Used\n");
 
 		int usedSpace = 0;
-		for (int i = 0; i < 512; i += 16) {
+		for (int i = 0; i < SECTOR_STORAGE_CAPACITY; i += 16) {
+
+			// Assuming sequential loading
 			if (dir[i] == 0) break;
 
 			// Printing file names in 8-dot-3 format
-			for (int j = 0; j < 8; j++) {
+			for (int j = 0; j < 8; ++j) {
 				if (dir[i + j] == 0) {
 					printf(".");
 					break;
@@ -133,22 +145,19 @@ int main(int argc, char* argv[])
 				printf("%c", dir[i + j]);
 			}
 
-			// Printing file extension (type)
+			// Printing file extension (9th byte)
 			printf("%c\t\t", dir[i + 8]);
 
 			// Calculating and printing bytes used by each file
-			int startSector = dir[i + 9];
-			int numSectors = dir[i + 10];
-
-			int bytesUsed = 512 * numSectors;
+			int numSectors = dir[i + 10]; // (11th byte)
+			int bytesUsed = SECTOR_STORAGE_CAPACITY * numSectors;
 			usedSpace += bytesUsed;
 
 			printf("%d\n", bytesUsed);
 		}
 
-		// Calculating free space
-		int freeSpace = 261632 - usedSpace;
-
+		// Calculating and output free space
+		int freeSpace = TOTAL_BYTES - usedSpace;
 		printf("\nTotal space used by files: %d bytes\n", usedSpace);
 		printf("Total free space remaining: %d bytes\n", freeSpace);
 	}
@@ -174,7 +183,7 @@ int main(int argc, char* argv[])
 
 		char* targetFile = argv[2];
 
-		for (int i = 0; i < 512; i += 16) {
+		for (int i = 0; i < SECTOR_STORAGE_CAPACITY; i += 16) {
 			if (dir[i] == 0) break;
 
 			// Check if the filename matches without extension
@@ -204,11 +213,11 @@ int main(int argc, char* argv[])
 		printf("Printing file '%s':\n", targetFile);
 
 		// Load the file content
-		fseek(floppy, startSector * 512, SEEK_SET);
+		fseek(floppy, startSector * SECTOR_STORAGE_CAPACITY, SEEK_SET);
 		char buffer[MAX_FILE_SIZE];
 		int bytesRead = 0;
-		for (int i = 0; i < numSectors; i++) {
-			for (int j = 0; j < 512; j++) {
+		for (int i = 0; i < numSectors; ++i) {
+			for (int j = 0; j < SECTOR_STORAGE_CAPACITY; ++j) {
 				char c = fgetc(floppy);
 				if (c == 0) {
 					break; // End of file
@@ -288,14 +297,14 @@ int main(int argc, char* argv[])
 			dir[freeDirEntryIndex + i] = 0;
 		}
 
-		// Set file type as "t" (text file)
+		// Set file type as "t" (text file) (9th location)
 		dir[freeDirEntryIndex + 8] = 't';
 
 		// Find a free sector on the disk in the map
 		for (int i = 0; i < SECTOR_STORAGE_CAPACITY; ++i) {
 			if (map[i] == 0) {
 				freeSector = i;
-				map[i] = -1; // Set map entry to 255 (indicating it's used)
+				map[i] = 255; // Set map entry to 255 (0xFF) (indicating it's used)
 				break;
 			}
 		}
@@ -307,9 +316,20 @@ int main(int argc, char* argv[])
 			return 1;
 		}
 
+		char content[513]; // 512 bytes for content + 1 for null terminator
+		printf("Enter content for the file (up to 512 characters):\n");
+		fgets(content, sizeof(content), stdin);
+
+		// Truncate content if it exceeds 512 bytes
+		content[512] = '\0';
+
+		// Write the content to the file
+		fseek(floppy, freeSector * SECTOR_STORAGE_CAPACITY, SEEK_SET);
+		fwrite(content, sizeof(char), strlen(content), floppy);
+
 		// Update directory entry with file location information
 		dir[freeDirEntryIndex + 9] = freeSector; // Start sector
-		dir[freeDirEntryIndex + 10] = 1; // Length
+		dir[freeDirEntryIndex + 10] = 1; // Only uses one sector
 
 		// Write the map and directory sectors back to the disk
 		fseek(floppy, SECTOR_STORAGE_CAPACITY * DISK_MAP_SECTOR_NUM, SEEK_SET);
@@ -352,7 +372,7 @@ int main(int argc, char* argv[])
 		int numSectors = -1;
 
 		// Search for the file in the directory
-		for (int i = 0; i < 512; i += 16) {
+		for (int i = 0; i < SECTOR_STORAGE_CAPACITY; i += 16) {
 			if (dir[i] == 0) {
 				break; // End of directory
 			}
@@ -384,13 +404,13 @@ int main(int argc, char* argv[])
 		}
 
 		// Write the updated map and directory sectors back to the disk
-		fseek(floppy, 512 * 256, SEEK_SET);
-		for (int i = 0; i < 512; ++i) {
+		fseek(floppy, SECTOR_STORAGE_CAPACITY * 256, SEEK_SET);
+		for (int i = 0; i < SECTOR_STORAGE_CAPACITY; ++i) {
 			fputc(map[i], floppy);
 		}
 
-		fseek(floppy, 512 * 257, SEEK_SET);
-		for (int i = 0; i < 512; ++i) {
+		fseek(floppy, SECTOR_STORAGE_CAPACITY * 257, SEEK_SET);
+		for (int i = 0; i < SECTOR_STORAGE_CAPACITY; ++i) {
 			fputc(dir[i], floppy);
 		}
 

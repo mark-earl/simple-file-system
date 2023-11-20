@@ -1,2 +1,2 @@
 filesys: filesys.c
-	gcc -o filesys filesys.c
+	gcc -Wall -Wextra -o filesys filesys.c
