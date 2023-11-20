@@ -252,16 +252,20 @@ int main(int argc, char* argv[])
 		int freeSector = -1;
 
 		// Search for a free directory entry
-		for (int i = 0; i < 512; i += 16) {
+		for (int i = 0; i < SECTOR_STORAGE_CAPACITY; i += 16) {
+
+			// If we found a free index, break
 			if (dir[i] == 0) {
 				freeDirEntryIndex = i;
 				break;
 			}
 
+			// Get the current filename
 			char filename[9];
 			strncpy(filename, (char*)&dir[i], 8);
 			filename[8] = '\0';
 
+			// Ensure the new filename is unique
 			if (strcmp(filename, newFileName) == 0) {
 				printf("Error: Duplicate or invalid file name\n");
 				fclose(floppy);
@@ -269,6 +273,7 @@ int main(int argc, char* argv[])
 			}
 		}
 
+		// Check directory space
 		if (freeDirEntryIndex == -1) {
 			printf("Error: Insufficient directory space\n");
 			fclose(floppy);
@@ -287,7 +292,7 @@ int main(int argc, char* argv[])
 		dir[freeDirEntryIndex + 8] = 't';
 
 		// Find a free sector on the disk in the map
-		for (int i = 0; i < 512; ++i) {
+		for (int i = 0; i < SECTOR_STORAGE_CAPACITY; ++i) {
 			if (map[i] == 0) {
 				freeSector = i;
 				map[i] = -1; // Set map entry to 255 (indicating it's used)
@@ -295,6 +300,7 @@ int main(int argc, char* argv[])
 			}
 		}
 
+		// Check disk space
 		if (freeSector == -1) {
 			printf("Error: Insufficient disk space\n");
 			fclose(floppy);
@@ -306,13 +312,13 @@ int main(int argc, char* argv[])
 		dir[freeDirEntryIndex + 10] = 1; // Length
 
 		// Write the map and directory sectors back to the disk
-		fseek(floppy, 512 * 256, SEEK_SET);
-		for (int i = 0; i < 512; ++i) {
+		fseek(floppy, SECTOR_STORAGE_CAPACITY * DISK_MAP_SECTOR_NUM, SEEK_SET);
+		for (int i = 0; i < SECTOR_STORAGE_CAPACITY; ++i) {
 			fputc(map[i], floppy);
 		}
 
-		fseek(floppy, 512 * 257, SEEK_SET);
-		for (int i = 0; i < 512; ++i) {
+		fseek(floppy, SECTOR_STORAGE_CAPACITY * DISK_DIR_SECTOR_NUM, SEEK_SET);
+		for (int i = 0; i < SECTOR_STORAGE_CAPACITY; ++i) {
 			fputc(dir[i], floppy);
 		}
 
