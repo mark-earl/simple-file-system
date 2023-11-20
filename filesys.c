@@ -166,7 +166,7 @@ int main(int argc, char* argv[])
 	 * This is easy to test given the four files on the disk image, only one of which (msg) should be viewable. Also
 	 * remember to test the “file not found” error.
 	 */
-	else if (strcmp(argv[1], "P") == 0 && argc == 3) {
+	else if (argc == 3 && strcmp(argv[1], "P") == 0) {
 
 		int found = 0;
 		int startSector = -1;
@@ -182,7 +182,7 @@ int main(int argc, char* argv[])
 			strncpy(filename, (char*)&dir[i], 8);
 			filename[8] = '\0';
 
-			if (strcmp(filename, targetFile) == 0) {
+			if (strcmp(filename, strtok(targetFile, ".")) == 0) {
 				found = 1;
 				startSector = dir[i + 9];
 				numSectors = dir[i + 10];
