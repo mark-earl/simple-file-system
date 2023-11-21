@@ -315,15 +315,24 @@ int main(int argc, char* argv[])
 			return 1;
 		}
 
-		char content[513]; // 512 bytes for content + 1 for null terminator
+		char content[512]; // 511 bytes for content + 1 for null terminator
 		printf("Enter content for the file (up to 512 characters):\n");
 		fgets(content, sizeof(content), stdin);
 
 		// Truncate content if it exceeds 512 bytes
-		content[512] = '\0';
+		content[511] = '\0';
 
-		// Write the content to the file
+		// Find where we want to write
 		fseek(floppy, freeSector * SECTOR_STORAGE_CAPACITY, SEEK_SET);
+
+		// Fill the sector with null bytes (0s)
+		char eraseBuffer[SECTOR_STORAGE_CAPACITY];
+		memset(eraseBuffer, 0, sizeof(eraseBuffer));
+    	fwrite(eraseBuffer, sizeof(char), SECTOR_STORAGE_CAPACITY, floppy);
+
+		// Find where we want to write (again traveling "backwards")
+		fseek(floppy, freeSector * SECTOR_STORAGE_CAPACITY, SEEK_SET);
+		// Write the content to the file
 		fwrite(content, sizeof(char), strlen(content), floppy);
 
 		// Update directory entry with file location information
