@@ -134,7 +134,7 @@ int main(int argc, char* argv[])
 		for (int i = 0; i < SECTOR_STORAGE_CAPACITY; i += 16) {
 
 			// Assuming sequential loading
-			if (dir[i] == 0) break;
+			if (dir[i] == 0) continue;
 
 			// Printing file names in 8-dot-3 format
 			for (int j = 0; j < 8; ++j) {
@@ -184,7 +184,7 @@ int main(int argc, char* argv[])
 		char* targetFile = argv[2];
 
 		for (int i = 0; i < SECTOR_STORAGE_CAPACITY; i += 16) {
-			if (dir[i] == 0) break;
+			if (dir[i] == 0) continue;
 
 			// Check if the filename matches without extension
 			char filename[9];
@@ -382,7 +382,7 @@ int main(int argc, char* argv[])
 		// Search for the file in the directory
 		for (int i = 0; i < SECTOR_STORAGE_CAPACITY; i += 16) {
 			if (dir[i] == 0) {
-				break; // End of directory
+				continue;
 			}
 
 			char filename[9];
