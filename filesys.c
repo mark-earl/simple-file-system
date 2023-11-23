@@ -286,7 +286,7 @@ int main(int argc, char* argv[])
 		// Fill the sector with null bytes (0s)
 		char eraseBuffer[SECTOR_STORAGE_CAPACITY];
 		memset(eraseBuffer, 0, sizeof(eraseBuffer));
-    	fwrite(eraseBuffer, sizeof(char), SECTOR_STORAGE_CAPACITY, floppy);
+    		fwrite(eraseBuffer, sizeof(char), SECTOR_STORAGE_CAPACITY, floppy);
 
 		// Find where we want to write (again traveling "backwards")
 		fseek(floppy, freeSector * SECTOR_STORAGE_CAPACITY, SEEK_SET);
