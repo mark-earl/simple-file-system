@@ -32,34 +32,17 @@
 #include <stdio.h>
 #include <string.h>
 
-// Constants
+// Constants (in bytes)
 #define DISK_MAP_SECTOR_NUM 256
 #define DISK_DIR_SECTOR_NUM 257
-#define SECTOR_STORAGE_CAPACITY 512 // bytes
+#define SECTOR_STORAGE_CAPACITY 512
 #define TOTAL_BYTES 261632
 #define MAX_FILE_SIZE 12288
 
 int main(int argc, char* argv[])
 {
-	/**
-	 * @type FILE*: Pointer to an object type that identifies a stream and contains the information needed
-	 * to control it, including a pointer to its buffer, its position indicator and all its state indicators.
-	 *
-	 * @doc: https://cplusplus.com/reference/cstdio/FILE/
-	 */
+	// stream object
 	FILE* floppy;
-
-	/**
-	 * FILE * fopen ( const char * filename, const char * mode );
-	 * @param filename: C string containing the name of the file to be opened.
-	 * @param mode: C string containing a file access mode
-	 * NOTE: "r+": read/update: Open a file for update (both for input and output). The file must exist.
-	 *
-	 * @retval: If the file is successfully opened, the function returns a pointer to a FILE object that
-	 * can be used to identify the stream on future operations. Otherwise, a null pointer (NULL) is returned.
-	 *
-	 * @doc: https://cplusplus.com/reference/cstdio/fopen/
-	 */
 
 	// open the floppy image
 	floppy=fopen("floppya.img","r+");
@@ -70,35 +53,10 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
-	/**
-	 * int fseek( FILE *stream, long offset, int origin );
-	 * @param stream: file stream to modify
-	 * @param offset: number of characters to shift the position relative to origin
-	 * @param origin: position to which offset is added. It can have one of the following values: SEEK_SET, SEEK_CUR, SEEK_END
-     *
-	 **SEEK_SET argument to fseek indicating seeking from beginning of the file
-	 * SEEK_CUR argument to fseek indicating seeking from the current file position
-	 * SEEK_END argument to fseek indicating seeking from end of the file
-     *
-	 * @retval ​0​ upon success, nonzero value otherwise.
-	 *
-	 * @doc: https://cplusplus.com/reference/cstdio/fseek/
-	 */
-
 	// load the disk map from sector 256
 	char map[SECTOR_STORAGE_CAPACITY];
 	fseek(floppy, SECTOR_STORAGE_CAPACITY * DISK_MAP_SECTOR_NUM, SEEK_SET);
 	for(int i = 0; i < SECTOR_STORAGE_CAPACITY; ++i) {
-
-		/**
-		 * int fgetc ( FILE * stream );
-		 * @param stream: Pointer to a FILE object that identifies an input stream.
-		 *
-		 * @retval: On success, the character read is returned (promoted to an int value).
-		 * The return type is int to accommodate for the special value EOF, which indicates failure:
-		 * If the position indicator was at the end-of-file, the function returns EOF and sets the eof indicator (feof) of stream.
-		 * If some other reading error happens, the function also returns EOF, but sets its error indicator (ferror) instead.
-		*/
 		map[i] = fgetc(floppy);
 	}
 
@@ -133,7 +91,7 @@ int main(int argc, char* argv[])
 		int usedSpace = 0;
 		for (int i = 0; i < SECTOR_STORAGE_CAPACITY; i += 16) {
 
-			// Assuming sequential loading
+			// No entry? Go to next one.
 			if (dir[i] == 0) continue;
 
 			// Printing file names in 8-dot-3 format
@@ -425,8 +383,8 @@ int main(int argc, char* argv[])
 		printf("File '%s' deleted successfully\n", deleteFileName);
 	}
 
-	else {
-		// print disk map
+	// print disk map
+	else if (argc == 2 && strcmp(argv[1], "DISK_MAP") == 0) {
 		printf("Disk usage map:\n");
 		printf("      0 1 2 3 4 5 6 7 8 9 A B C D E F\n");
 		printf("     --------------------------------\n");
@@ -441,14 +399,8 @@ int main(int argc, char* argv[])
 				default: printf("0x%d_ ", i); break;
 			}
 			for (int j = 0; j < 16; ++j) {
-
-				if (map[16 * i + j] == -1) {
-					printf(" X");
-				}
-
-				else {
-					printf(" .");
-				}
+				if (map[16 * i + j] == -1) {printf(" X");}
+				else {printf(" .");}
 			}
 			printf("\n");
 		}
@@ -458,28 +410,15 @@ int main(int argc, char* argv[])
 		printf("Name    Type Start Length\n");
 		for (int i = 0; i < SECTOR_STORAGE_CAPACITY; i += 16) {
 
-			if (dir[i] == 0){
-				break;
-			}
+			if (dir[i] == 0){break;}
 
 			for (int j = 0; j < 8; ++j) {
-
-				if (dir[i+j]==0){
-					printf(" ");
-				}
-
-				else {
-					printf("%c", dir[i + j]);
-				}
+				if (dir[i+j]==0){printf(" ");}
+				else {printf("%c", dir[i + j]);}
 			}
 
-			if ((dir[i + 8] == 't') || (dir[i + 8] == 'T')) {
-				printf("text");
-			}
-
-			else {
-				printf("exec");
-			}
+			if ((dir[i + 8] == 't') || (dir[i + 8] == 'T')) {printf("text");}
+			else {printf("exec");}
 
 			printf(" %5d %6d bytes\n", dir[i+9], SECTOR_STORAGE_CAPACITY*dir[i + 10]);
 		}
