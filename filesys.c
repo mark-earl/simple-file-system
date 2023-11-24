@@ -214,28 +214,30 @@ int main(int argc, char* argv[])
 
 		char* newFileName = argv[2];
 
-		int freeDirEntryIndex = -1;
 		int freeSector = -1;
 
-		// Search for a free directory entry
+		// Ensure the new filename is unique
 		for (int i = 0; i < SECTOR_STORAGE_CAPACITY; i += 16) {
-
-			// If we found a free index, break
-			if (dir[i] == 0) {
-				freeDirEntryIndex = i;
-				break;
-			}
-
 			// Get the current filename
 			char filename[9];
 			strncpy(filename, (char*)&dir[i], 8);
 			filename[8] = '\0';
 
-			// Ensure the new filename is unique
+			// Check for duplicate filename
 			if (strcmp(filename, newFileName) == 0) {
 				printf("Error: Duplicate or invalid file name\n");
 				fclose(floppy);
 				return 1;
+			}
+		}
+
+		// Search for a free directory entry
+		int freeDirEntryIndex = -1;
+		for (int i = 0; i < SECTOR_STORAGE_CAPACITY; i += 16) {
+			// If we found a free index, set and break (we already checked the whole disk)
+			if (dir[i] == 0) {
+				freeDirEntryIndex = i;
+				break;
 			}
 		}
 
