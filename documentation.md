@@ -1,11 +1,11 @@
 # @file: documentation.md
 
-> This file contains references for all of the C functions I used If the abbreviated documentation contained within this file is insufficient, the full docs are linked in the header of each section.
+This file contains references for all of the C functions I used If the abbreviated documentation contained within this file is insufficient, the full docs are linked in the header of each section.
 
 ## [cstdio](https://cplusplus.com/reference/cstdio/)
 
 ### [`FILE*`](https://cplusplus.com/reference/cstdio/FILE/)
-> Pointer to an object type that identifies a stream and contains the information needed
+Pointer to an object type that identifies a stream and contains the information needed
 to control it, including a pointer to its buffer, its position indicator and all its state indicators.
 
 ### [`FILE * fopen ( const char * filename, const char * mode );`](https://cplusplus.com/reference/cstdio/fopen/)
