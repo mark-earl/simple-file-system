@@ -156,7 +156,7 @@
  * char * strtok ( char * str, const char * delimiters );
  * @param str: C string to truncate.
  * Notice that this string is modified by being broken into smaller strings (tokens).
- * Alternativelly, a null pointer may be specified, in which case the function continues
+ * Alternatively, a null pointer may be specified, in which case the function continues
  * scanning where a previous successful call to the function ended.
  * @param delimiters: C string containing the delimiter characters.
  * These can be different from one call to another.
@@ -171,7 +171,7 @@
  * size_t strlen ( const char * str );
  * @param str: C string.
  *
- * @revtal: The length of string.
+ * @retval: The length of string.
  *
  * @doc: https://cplusplus.com/reference/cstring/strlen/
  */
