@@ -424,5 +424,9 @@ int main(int argc, char* argv[])
 		}
 	}
 
+	else {
+		printf("Unsupported/Unknown command-line argument.\n");
+	}
+
 	fclose(floppy);
 }
