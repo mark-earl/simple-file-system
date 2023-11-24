@@ -7,7 +7,7 @@ In order to access a file stored on a disk you have to know its location and sec
 This is the purpose of a file system; to match a file name with its location and footprint on the disk. File systems greatly vary in complexity so our purpose is to work with a very simple one.
 
 * [floppya.img](floppya.img): A simulated 3½" 1.44Mb floppy disk formatted with our file system and including a couple of application programs.
-* [filesys.c](filesys.c) Program you for manipulating the files stored on the disk.
+* [filesys.c](filesys.c) Program for manipulating the files stored on the disk.
 
 The purpose of this lab is to turn [filesys.c](filesys.c) into a simple tool for manipulating the files stored on the provided disk. It will accept options from the Linux command line and alter the disk accordingly.
 
@@ -17,7 +17,7 @@ In short, once compiled it supports these four commands:
 * `./filesys M filename` create a text file and store it to disk
 * `./filesys P filename` read the named file and print it to screen
 
-Any other option yields an error message. Let us review each of these in turn.
+Any other option yields an error message.
 
 ## Build Instructions
 1) Ensure that you are in the project directory
