@@ -32,7 +32,7 @@
 #include <stdio.h>
 #include <string.h>
 
-// Constants (in bytes)
+// Constants
 #define DISK_MAP_SECTOR_NUM 256
 #define DISK_DIR_SECTOR_NUM 257
 #define SECTOR_STORAGE_CAPACITY 512
@@ -286,7 +286,7 @@ int main(int argc, char* argv[])
 		// Fill the sector with null bytes (0s)
 		char eraseBuffer[SECTOR_STORAGE_CAPACITY];
 		memset(eraseBuffer, 0, sizeof(eraseBuffer));
-    		fwrite(eraseBuffer, sizeof(char), SECTOR_STORAGE_CAPACITY, floppy);
+		fwrite(eraseBuffer, sizeof(char), SECTOR_STORAGE_CAPACITY, floppy);
 
 		// Find where we want to write (again traveling "backwards")
 		fseek(floppy, freeSector * SECTOR_STORAGE_CAPACITY, SEEK_SET);
