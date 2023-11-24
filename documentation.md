@@ -1,4 +1,4 @@
-# @file: documentation.md
+# documentation.md
 
 This file contains references for all of the C functions I used If the abbreviated documentation contained within this file is insufficient, the full docs are linked in the header of each section.
 
