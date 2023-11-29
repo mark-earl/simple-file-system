@@ -12,10 +12,31 @@ This is the purpose of a file system; to match a file name with its location and
 The purpose of this lab is to turn [filesys.c](filesys.c) into a simple tool for manipulating the files stored on the provided disk. It will accept options from the Linux command line and alter the disk accordingly.
 
 In short, once compiled it supports these four commands:
-* `./filesys D filename` delete the named file from the disk
-* `./filesys L` list the files on the disk
-* `./filesys M filename` create a text file and store it to disk
-* `./filesys P filename` read the named file and print it to screen
+
+Delete the named file from the disk
+```bash
+./filesys D filename
+```
+
+List the files on the disk
+```bash
+./filesys L
+```
+
+Create a text file and store it to disk
+```bash
+./filesys M filename
+```
+
+Read the named file and print it to screen
+```bash
+./filesys P filename
+```
+
+NOTE: If you want to see a graphical representation of the disk run:
+```bash
+./filesys DISK_MAP
+```
 
 Any other option yields an error message.
 
